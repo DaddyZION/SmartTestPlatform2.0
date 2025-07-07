@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Exam Platform</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" href="data:image/svg+xml,&lt;svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'&gt;&lt;text y='.9em' font-size='90'&gt;📚&lt;/text&gt;&lt;/svg&gt;">
+    
+    <!-- MathJax Configuration -->
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']],
+                processEscapes: true,
+                processEnvironments: true
+            },
+            options: {
+                ignoreHtmlClass: 'tex2jax_ignore',
+                processHtmlClass: 'tex2jax_process'
+            },
+            startup: {
+                ready: () => {
+                    console.log('MathJax is loaded and ready.');
+                    MathJax.startup.defaultReady();
+                }
+            }
+        };
+    </script>
+    <script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div id="initialView">
+            <h1>Smart Exam Platform</h1>
+            <p class="subtitle">Interactive learning with instant feedback and detailed explanations</p>
+            
+            <!-- Instructions -->
+            <div class="card">
+                <div class="section-header">
+                    <div class="section-icon">📖</div>
+                    <h3>How to Get Started</h3>
+                </div>
+                <div class="instruction-grid">
+                    <div class="instruction-item">
+                        <h4>⚡ Quick Start</h4>
+                        <p>Choose from 16 pre-built exams covering various subjects and start learning immediately</p>
+                    </div>
+                    <div class="instruction-item">
+                        <h4>📁 Custom Content</h4>
+                        <p>Upload your own markdown exam files for personalized study sessions</p>
+                    </div>
+                    <div class="instruction-item">
+                        <h4>🎯 AI-Generated</h4>
+                        <p>Copy our template and use AI to create custom exams on any topic</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Pre-built Exams -->
+            <div class="card">
+                <div class="section-header">
+                    <div class="section-icon">🎓</div>
+                    <h3>Pre-built Exam Library</h3>
+                </div>
+                <select id="generatedExamSelect">
+                    <option value="">Select a subject to begin...</option>
+                    <option value="anthropology_exam.md">📜 Anthropology</option>
+                    <option value="art_history_exam.md">🎨 Art History</option>
+                    <option value="astronomy_exam.md">🌌 Astronomy</option>
+                    <option value="chemistry_exam.md">⚗️ Chemistry</option>
+                    <option value="computer_science_exam.md">💻 Computer Science</option>
+                    <option value="economics_exam.md">📈 Economics</option>
+                    <option value="environmental_science_exam.md">🌱 Environmental Science</option>
+                    <option value="geography_exam.md">🗺️ Geography</option>
+                    <option value="history_exam.md">🏛️ History</option>
+                    <option value="linguistics_exam.md">🗣️ Linguistics</option>
+                    <option value="literature_exam.md">📚 Literature</option>
+                    <option value="mathematics_exam.md">🔢 Mathematics</option>
+                    <option value="music_theory_exam.md">🎵 Music Theory</option>
+                    <option value="philosophy_exam.md">🤔 Philosophy</option>
+                    <option value="physics_exam.md">⚛️ Physics</option>
+                    <option value="psychology_exam.md">🧠 Psychology</option>
+                    <option value="sociology_exam.md">👥 Sociology</option>
+                </select>
+                <button id="loadGeneratedExam" class="btn btn-primary btn-lg w-full">
+                    Start Selected Exam
+                </button>
+            </div>
+            
+            <!-- Divider -->
+            <div class="divider">
+                <span>or</span>
+            </div>
+            
+            <!-- Upload Custom Exam -->
+            <div class="card">
+                <div class="section-header">
+                    <div class="section-icon">📎</div>
+                    <h3>Upload Custom Exam</h3>
+                </div>
+                <input type="file" id="examFile" accept=".md" placeholder="Choose a markdown (.md) file...">
+                <p style="text-align: center; margin: 1rem 0; color: var(--text-muted); font-size: 0.9rem;">
+                    Supports standard markdown format with questions and answers
+                </p>
+            </div>
+            
+            <!-- Create Your Own -->
+            <div class="card">
+                <div class="section-header">
+                    <div class="section-icon">🤖</div>
+                    <h3>Create with AI</h3>
+                </div>
+                <p style="text-align: center; margin-bottom: 1.5rem; color: var(--text-secondary);">
+                    Generate custom exams instantly! Just enter any subject and we'll create a comprehensive exam for you.
+                </p>
+                
+                <!-- Subject Input -->
+                <div style="margin-bottom: 1.5rem;">
+                    <label for="subjectInput" style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: var(--text-primary);">
+                        What subject would you like to study?
+                    </label>
+                    <input type="text" id="subjectInput" placeholder="e.g., Biology, World War II, Calculus, Psychology..." 
+                           style="width: 100%; padding: 0.875rem; background: var(--surface-light); border: 1px solid var(--border); border-radius: var(--border-radius); color: var(--text-primary); font-size: 1rem; font-family: inherit; transition: var(--transition);">
+                </div>
+                
+                <!-- Generate Button -->
+                <div style="margin-bottom: 1.5rem;">
+                    <button id="generateExamBtn" class="btn btn-primary w-full" style="font-size: 1.1rem; padding: 1rem;">
+                        ✨ Generate Exam Instantly
+                    </button>
+                </div>
+                
+                <!-- Progress Indicator -->
+                <div id="aiProgress" class="hidden" style="margin-bottom: 1.5rem;">
+                    <div style="display: flex; align-items: center; gap: 0.75rem; padding: 1rem; background: var(--surface-light); border-radius: var(--border-radius); border: 1px solid var(--border);">
+                        <div style="width: 1.5rem; height: 1.5rem; border: 2px solid var(--primary-color); border-top: 2px solid transparent; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+                        <div>
+                            <div style="font-weight: 500; color: var(--text-primary);">Creating your exam...</div>
+                            <div id="progressText" style="font-size: 0.85rem; color: var(--text-muted);">This usually takes 10-30 seconds</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Success Message -->
+                <div id="successMessage" class="hidden" style="margin-bottom: 1.5rem;">
+                    <div style="padding: 1rem; background: linear-gradient(135deg, #10b981, #059669); color: white; border-radius: var(--border-radius); text-align: center;">
+                        <div style="font-size: 1.2rem; font-weight: 600; margin-bottom: 0.5rem;">🎉 Exam Created Successfully!</div>
+                        <div style="font-size: 0.9rem; opacity: 0.9; margin-bottom: 1rem;">Your exam has been generated and is ready to use!</div>
+                        <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+                            <button id="startExamBtn" class="btn btn-primary" style="background: rgba(255,255,255,0.9); border: 1px solid rgba(255,255,255,0.3); color: var(--primary-color); font-weight: 600;">
+                                🚀 Start Exam
+                            </button>
+                            <button id="downloadExamBtn" class="btn btn-secondary" style="background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3); color: white;">
+                                📥 Download Exam
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Score History -->
+            <div class="card">
+                <div class="section-header">
+                    <div class="section-icon">📊</div>
+                    <h3>Score History</h3>
+                </div>
+                <div id="scoreHistoryList" style="min-height: 3rem;">
+                    <p style="text-align: center; color: var(--text-muted); font-style: italic;">No exam scores yet. Complete an exam to see your history!</p>
+                </div>
+                <button id="clearHistoryBtn" class="btn btn-secondary" style="margin-top: 1rem;">
+                    Clear History
+                </button>
+            </div>
+        </div>
+
+        <!-- Exam Area -->
+        <div id="examArea" class="hidden">
+            <div class="exam-header">
+                <button id="backBtn" class="btn btn-secondary" style="margin-bottom: 1rem;">
+                    ← Back to Home
+                </button>
+                <div class="progress-container">
+                    <div id="progressBar" class="progress-bar"></div>
+                </div>
+            </div>
+            
+            <div id="questionContainer" class="question-card">
+                <!-- Question content will be inserted here -->
+            </div>
+            
+            <div id="answerContainer">
+                <!-- Answer feedback will be inserted here -->
+            </div>
+            
+            <div class="flex gap-4 justify-center">
+                <button id="checkBtn" class="btn btn-primary">Check Answer</button>
+                <button id="nextBtn" class="btn btn-secondary hidden">Next Question</button>
+            </div>
+        </div>
+
+        <!-- Results Area -->
+        <div id="resultsArea" class="hidden">
+            <div class="card results-card">
+                <h2>🎉 Exam Complete!</h2>
+                <div class="score-display" id="score">85%</div>
+                
+                <div class="score-details">
+                    <div class="score-item">
+                        <h4>Score</h4>
+                        <span id="scoreText">12/15</span>
+                    </div>
+                    <div class="score-item">
+                        <h4>Percentage</h4>
+                        <span id="percentageText">80%</span>
+                    </div>
+                    <div class="score-item">
+                        <h4>Grade</h4>
+                        <span id="gradeText">B+</span>
+                    </div>
+                </div>
+                
+                <div class="flex gap-4 justify-center" style="margin-top: 1.5rem;">
+                    <button id="restartBtn" class="btn btn-primary btn-lg">
+                        Take Another Exam
+                    </button>
+                    <button id="backFromResultsBtn" class="btn btn-secondary btn-lg">
+                        Back to Home
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Score History -->
+        <div id="scoreHistory" class="card hidden" style="margin-top: 2rem;">
+            <div class="section-header">
+                <div class="section-icon">📊</div>
+                <h3>Score History</h3>
+            </div>
+            <div id="scoreHistoryList">
+                <!-- Score history will be populated here -->
+            </div>
+            <button id="clearHistoryBtn" class="btn btn-secondary" style="margin-top: 1rem;">
+                Clear History
+            </button>
+        </div>
+    </div>
+
+    <!-- Customization Button -->
+    <button id="customizeBtn" class="btn btn-secondary" style="position: fixed; bottom: 1rem; right: 1rem; padding: 0.75rem; border-radius: 50%; width: 3rem; height: 3rem;" title="Customize Colors">
+        🎨
+    </button>
+    
+    <!-- Customization Modal -->
+    <div id="customizeModal" class="modal hidden" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.8); display: flex; align-items: center; justify-content: center; z-index: 1000;">
+        <div class="card" style="width: 90%; max-width: 500px; max-height: 80vh; overflow-y: auto;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                <h3 style="margin: 0;">🎨 Customize Colors</h3>
+                <button id="closeModal" style="background: none; border: none; color: var(--text-primary); font-size: 1.5rem; cursor: pointer; padding: 0.25rem; border-radius: 4px;">×</button>
+            </div>
+            
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Accent Color:</label>
+                <div style="display: flex; gap: 0.75rem; align-items: center;">
+                    <input type="color" id="accentColor" value="#6366f1" style="width: 3rem; height: 2rem; border: 2px solid var(--border); border-radius: 6px; cursor: pointer;">
+                    <span id="accentPreview" style="width: 2rem; height: 2rem; border: 2px solid var(--border); border-radius: 4px; display: block; background-color: rgb(99, 102, 241);"></span>
+                </div>
+            </div>
+            
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Background Hue:</label>
+                <input type="range" id="backgroundHue" min="0" max="360" value="220" style="width: 100%; height: 0.5rem; background: linear-gradient(to right, #ff0000, #ffff00, #00ff00, #00ffff, #0000ff, #ff00ff, #ff0000); border-radius: 4px; cursor: pointer;">
+                <span id="backgroundPreview" style="width: 2rem; height: 2rem; border: 2px solid var(--border); border-radius: 4px; display: block; margin-top: 0.5rem; background-color: rgb(64, 106, 191);"></span>
+            </div>
+            
+            <div style="margin-bottom: 1.5rem;">
+                <h4 style="margin-bottom: 0.75rem; color: var(--text-secondary);">Quick Presets:</h4>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 0.5rem;">
+                    <button class="preset-btn btn btn-secondary" data-accent="#6366f1" data-hue="220" style="font-size: 0.85rem; padding: 0.5rem;">🔵 Blue</button>
+                    <button class="preset-btn btn btn-secondary" data-accent="#10b981" data-hue="160" style="font-size: 0.85rem; padding: 0.5rem;">🟢 Green</button>
+                    <button class="preset-btn btn btn-secondary" data-accent="#f59e0b" data-hue="45" style="font-size: 0.85rem; padding: 0.5rem;">🟡 Yellow</button>
+                    <button class="preset-btn btn btn-secondary" data-accent="#ef4444" data-hue="0" style="font-size: 0.85rem; padding: 0.5rem;">🔴 Red</button>
+                    <button class="preset-btn btn btn-secondary" data-accent="#8b5cf6" data-hue="270" style="font-size: 0.85rem; padding: 0.5rem;">🟣 Purple</button>
+                    <button class="preset-btn btn btn-secondary" data-accent="#06b6d4" data-hue="190" style="font-size: 0.85rem; padding: 0.5rem;">🔵 Cyan</button>
+                </div>
+            </div>
+            
+            <div style="display: flex; gap: 0.75rem; justify-content: flex-end;">
+                <button id="resetColors" class="btn btn-secondary">Reset</button>
+                <button id="applyColors" class="btn btn-primary">Apply Changes</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="exam-data.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>

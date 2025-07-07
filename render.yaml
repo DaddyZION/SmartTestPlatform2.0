@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: smart-exam-platform
+    env: node
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+    # Add your GEMINI_API_KEY in the Render dashboard
+    # Don't put sensitive keys in this file
