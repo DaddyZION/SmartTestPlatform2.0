@@ -28,6 +28,14 @@ app.post('/api/generate-exam', async (req, res) => {
         }
         
         console.log(`📚 Generating exam for subject: ${subject}`);
+        console.log(`🤖 Using model: gemini-2.5-flash-lite-preview-06-17`);
+        
+        // Available Gemini models:
+        // - gemini-2.5-flash-lite-preview-06-17 (Latest lite model, fast and efficient)
+        // - gemini-2.0-flash-exp (Experimental, fastest)
+        // - gemini-1.5-flash-latest (Stable, reliable)
+        // - gemini-1.5-pro-latest (More capable, slower)
+        const GEMINI_MODEL = 'gemini-2.5-flash-lite-preview-06-17';
         
         // Create the prompt for Gemini with strict formatting requirements
         const prompt = `Generate a ${subject} exam in EXACT markdown format. Follow this template PRECISELY:
@@ -166,8 +174,8 @@ CRITICAL RULES:
 - All questions must be multiple choice with 4 options each
 - Make questions relevant to ${subject} with varying difficulty levels`;
 
-        // Make API call to Gemini
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${GEMINI_API_KEY}`, {
+        // Make API call to Gemini 2.5 Flash
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -236,5 +244,6 @@ app.get('/api/health', (req, res) => {
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Smart Exam Platform server running on port ${PORT}`);
     console.log(`🔑 Gemini API Key: ${GEMINI_API_KEY ? 'Configured ✅' : 'Missing ❌'}`);
+    console.log(`🤖 AI Model: Gemini 2.5 Flash Lite (Preview 06-17)`);
     console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
 });
