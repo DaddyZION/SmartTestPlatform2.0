@@ -21,7 +21,7 @@ if (!GEMINI_API_KEY) {
 // Endpoint to generate exam with AI
 app.post('/api/generate-exam', async (req, res) => {
     try {
-        const { subject, difficulty = 'normal' } = req.body;
+        const { subject, difficulty = 'normal', questionCount = 15 } = req.body;
         
         if (!subject || !subject.trim()) {
             return res.status(400).json({ error: 'Subject is required' });
@@ -29,6 +29,7 @@ app.post('/api/generate-exam', async (req, res) => {
         
         console.log(`📚 Generating exam for subject: ${subject}`);
         console.log(`📊 Difficulty level: ${difficulty}`);
+        console.log(`📝 Question count: ${questionCount}`);
         console.log(`🤖 Using model: gemini-2.5-flash-lite-preview-06-17`);
         
         // Available Gemini models:
@@ -49,135 +50,71 @@ app.post('/api/generate-exam', async (req, res) => {
 
         const difficultyText = difficultyInstructions[difficulty] || difficultyInstructions.normal;
 
+        // Calculate sections and questions per section
+        const questionsPerSection = Math.ceil(questionCount / 3);
+        const section1Questions = Math.min(questionsPerSection, questionCount);
+        const section2Questions = Math.min(questionsPerSection, questionCount - section1Questions);
+        const section3Questions = questionCount - section1Questions - section2Questions;
+
+        // Generate dynamic question template
+        const generateQuestionsTemplate = (startNum, count, sectionName) => {
+            let template = `## Section ${sectionName}: Multiple Choice (${Math.round(count * 20 / questionCount * 3)} Marks)\n\n`;
+            for (let i = 0; i < count; i++) {
+                const questionNum = startNum + i;
+                template += `${questionNum}. [Write a ${subject} question here]?\n`;
+                template += `a) [Option A]\n`;
+                template += `b) [Option B]\n`;
+                template += `c) [Option C]\n`;
+                template += `d) [Option D]\n\n`;
+            }
+            return template;
+        };
+
+        // Generate answers template
+        const generateAnswersTemplate = (startNum, count, sectionName) => {
+            let template = `## Section ${sectionName}\n`;
+            for (let i = 0; i < count; i++) {
+                const questionNum = startNum + i;
+                const correctOption = ['a', 'b', 'c', 'd'][i % 4];
+                template += `${questionNum}. ${correctOption}) [Correct answer text] || **Explanation:** [Detailed explanation]\n`;
+            }
+            template += '\n';
+            return template;
+        };
+
+        // Build the complete template
+        let questionsTemplate = `# ${subject} Mock Exam\n\n`;
+        let answersTemplate = `# Answers\n\n`;
+        
+        let currentQuestionNum = 1;
+        
+        if (section1Questions > 0) {
+            questionsTemplate += generateQuestionsTemplate(currentQuestionNum, section1Questions, 'A');
+            answersTemplate += generateAnswersTemplate(currentQuestionNum, section1Questions, 'A');
+            currentQuestionNum += section1Questions;
+        }
+        
+        if (section2Questions > 0) {
+            questionsTemplate += generateQuestionsTemplate(currentQuestionNum, section2Questions, 'B');
+            answersTemplate += generateAnswersTemplate(currentQuestionNum, section2Questions, 'B');
+            currentQuestionNum += section2Questions;
+        }
+        
+        if (section3Questions > 0) {
+            questionsTemplate += generateQuestionsTemplate(currentQuestionNum, section3Questions, 'C');
+            answersTemplate += generateAnswersTemplate(currentQuestionNum, section3Questions, 'C');
+        }
+
         // Create the prompt for Gemini with strict formatting requirements
-        const prompt = `Generate a ${subject} exam at ${difficulty.toUpperCase()} difficulty level in EXACT markdown format. 
+        const prompt = `Generate a ${subject} exam at ${difficulty.toUpperCase()} difficulty level with EXACTLY ${questionCount} questions in EXACT markdown format. 
 
 DIFFICULTY REQUIREMENTS: ${difficultyText}
 
 Follow this template PRECISELY:
 
-# ${subject} Mock Exam
+${questionsTemplate}---
 
-## Section A: Multiple Choice (20 Marks)
-
-1. [Write a ${subject} question here]?
-a) [Option A]
-b) [Option B]
-c) [Option C]
-d) [Option D]
-
-2. [Write a ${subject} question here]?
-a) [Option A]
-b) [Option B]
-c) [Option C]
-d) [Option D]
-
-3. [Write a ${subject} question here]?
-a) [Option A]
-b) [Option B]
-c) [Option C]
-d) [Option D]
-
-4. [Write a ${subject} question here]?
-a) [Option A]
-b) [Option B]
-c) [Option C]
-d) [Option D]
-
-5. [Write a ${subject} question here]?
-a) [Option A]
-b) [Option B]
-c) [Option C]
-d) [Option D]
-
-## Section B: Multiple Choice (20 Marks)
-
-6. [Write a ${subject} question here]?
-a) [Option A]
-b) [Option B]
-c) [Option C]
-d) [Option D]
-
-7. [Write a ${subject} question here]?
-a) [Option A]
-b) [Option B]
-c) [Option C]
-d) [Option D]
-
-8. [Write a ${subject} question here]?
-a) [Option A]
-b) [Option B]
-c) [Option C]
-d) [Option D]
-
-9. [Write a ${subject} question here]?
-a) [Option A]
-b) [Option B]
-c) [Option C]
-d) [Option D]
-
-10. [Write a ${subject} question here]?
-a) [Option A]
-b) [Option B]
-c) [Option C]
-d) [Option D]
-
-## Section C: Multiple Choice (20 Marks)
-
-11. [Write a ${subject} question here]?
-a) [Option A]
-b) [Option B]
-c) [Option C]
-d) [Option D]
-
-12. [Write a ${subject} question here]?
-a) [Option A]
-b) [Option B]
-c) [Option C]
-d) [Option D]
-
-13. [Write a ${subject} question here]?
-a) [Option A]
-b) [Option B]
-c) [Option C]
-d) [Option D]
-
-14. [Write a ${subject} question here]?
-a) [Option A]
-b) [Option B]
-c) [Option C]
-d) [Option D]
-
-15. [Write a ${subject} question here]?
-a) [Option A]
-b) [Option B]
-c) [Option C]
-d) [Option D]
-
----
-
-# Answers
-
-## Section A
-1. a) [Correct answer text] || **Explanation:** [Detailed explanation]
-2. b) [Correct answer text] || **Explanation:** [Detailed explanation]
-3. c) [Correct answer text] || **Explanation:** [Detailed explanation]
-4. d) [Correct answer text] || **Explanation:** [Detailed explanation]
-5. a) [Correct answer text] || **Explanation:** [Detailed explanation]
-
-## Section B
-6. b) [Correct answer text] || **Explanation:** [Detailed explanation]
-7. c) [Correct answer text] || **Explanation:** [Detailed explanation]
-8. d) [Correct answer text] || **Explanation:** [Detailed explanation]
-9. a) [Correct answer text] || **Explanation:** [Detailed explanation]
-10. b) [Correct answer text] || **Explanation:** [Detailed explanation]
-
-## Section C
-11. c) [Correct answer text] || **Explanation:** [Detailed explanation]
-12. d) [Correct answer text] || **Explanation:** [Detailed explanation]
-13. a) [Correct answer text] || **Explanation:** [Detailed explanation]
-14. b) [Correct answer text] || **Explanation:** [Detailed explanation]
-15. c) [Correct answer text] || **Explanation:** [Detailed explanation]
+${answersTemplate}
 
 CRITICAL RULES:
 - Replace ALL bracketed placeholders with actual ${subject} content
@@ -186,7 +123,7 @@ CRITICAL RULES:
 - Options MUST start with letter, parenthesis, space: "a) "
 - Answers MUST use format: "1. a) [text] || **Explanation:** [text]"
 - Keep the "---" separator between questions and answers
-- Generate exactly 15 questions total
+- Generate exactly ${questionCount} questions total
 - All questions must be multiple choice with 4 options each
 - Make questions relevant to ${subject} at ${difficulty.toUpperCase()} difficulty level
 - ${difficultyText}

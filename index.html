@@ -77,6 +77,19 @@
                     </select>
                 </div>
                 
+                <!-- Question Count Selection for Pre-built -->
+                <div style="margin: 1rem 0;">
+                    <label for="prebuiltQuestionCountSelect" style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: var(--text-primary);">
+                        Number of Questions:
+                    </label>
+                    <select id="prebuiltQuestionCountSelect" style="width: 100%; padding: 0.875rem; background: var(--surface-light); border: 1px solid var(--border); border-radius: var(--border-radius); color: var(--text-primary); font-size: 1rem; font-family: inherit;">
+                        <option value="15">📝 15 Questions (Quick)</option>
+                        <option value="20">📋 20 Questions (Standard)</option>
+                        <option value="25">📄 25 Questions (Extended)</option>
+                        <option value="30">📚 30 Questions (Comprehensive)</option>
+                    </select>
+                </div>
+                
                 <div style="display: flex; gap: 1rem; margin-top: 1rem;">
                     <button id="loadGeneratedExam" class="btn btn-primary btn-lg" style="flex: 1;">
                         Start Selected Exam
@@ -137,6 +150,19 @@
                     </select>
                 </div>
                 
+                <!-- Question Count Selection for AI -->
+                <div style="margin-bottom: 1.5rem;">
+                    <label for="aiQuestionCountSelect" style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: var(--text-primary);">
+                        Number of Questions:
+                    </label>
+                    <select id="aiQuestionCountSelect" style="width: 100%; padding: 0.875rem; background: var(--surface-light); border: 1px solid var(--border); border-radius: var(--border-radius); color: var(--text-primary); font-size: 1rem; font-family: inherit;">
+                        <option value="15">📝 15 Questions (Quick)</option>
+                        <option value="20">📋 20 Questions (Standard)</option>
+                        <option value="25">📄 25 Questions (Extended)</option>
+                        <option value="30">📚 30 Questions (Comprehensive)</option>
+                    </select>
+                </div>
+                
                 <!-- Generate Button -->
                 <div style="margin-bottom: 1.5rem;">
                     <button id="generateExamBtn" class="btn btn-primary w-full" style="font-size: 1.1rem; padding: 1rem;">
@@ -183,6 +209,37 @@
                 </div>
                 <button id="clearHistoryBtn" class="btn btn-secondary" style="margin-top: 1rem;">
                     Clear History
+                </button>
+            </div>
+        </div>
+
+        <!-- Continue Previous Exams -->
+        <div class="card">
+            <div class="section-header">
+                <div class="section-icon">📋</div>
+                <h3>Continue Previous Exams</h3>
+            </div>
+            <p style="text-align: center; margin-bottom: 1.5rem; color: var(--text-secondary);">
+                Resume incomplete exams or review your completed ones. All exams are stored locally in your browser.
+            </p>
+            
+            <!-- Stored Exams List -->
+            <div id="storedExamsList" style="margin-bottom: 1.5rem;">
+                <p id="noStoredExams" style="text-align: center; color: var(--text-muted); font-style: italic; padding: 2rem;">
+                    No stored exams found. Generate or upload an exam to get started!
+                </p>
+            </div>
+            
+            <!-- Management Buttons -->
+            <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+                <button id="refreshStoredExams" class="btn btn-secondary">
+                    🔄 Refresh List
+                </button>
+                <button id="downloadAllExams" class="btn btn-primary" style="display: none;">
+                    📦 Download All Exams
+                </button>
+                <button id="clearAllExams" class="btn btn-danger" style="display: none; background: var(--danger-color, #dc2626); border-color: var(--danger-color, #dc2626);">
+                    🗑️ Clear All
                 </button>
             </div>
         </div>

@@ -15,6 +15,7 @@ const generatedExamSelect = document.getElementById('generatedExamSelect');
 const loadGeneratedExamBtn = document.getElementById('loadGeneratedExam');
 const generatePrebuiltExamBtn = document.getElementById('generatePrebuiltExam');
 const prebuiltDifficultySelect = document.getElementById('prebuiltDifficultySelect');
+const prebuiltQuestionCountSelect = document.getElementById('prebuiltQuestionCountSelect');
 
 // New elements for back button and score tracking
 const backBtn = document.getElementById('backBtn');
@@ -30,7 +31,15 @@ const aiProgress = document.getElementById('aiProgress');
 const progressText = document.getElementById('progressText');
 const subjectInput = document.getElementById('subjectInput');
 const aiDifficultySelect = document.getElementById('aiDifficultySelect');
+const aiQuestionCountSelect = document.getElementById('aiQuestionCountSelect');
 const successMessage = document.getElementById('successMessage');
+
+// Stored Exams Management elements
+const storedExamsList = document.getElementById('storedExamsList');
+const noStoredExams = document.getElementById('noStoredExams');
+const refreshStoredExamsBtn = document.getElementById('refreshStoredExams');
+const downloadAllExamsBtn = document.getElementById('downloadAllExams');
+const clearAllExamsBtn = document.getElementById('clearAllExams');
 
 let questions = [];
 let answers = [];
@@ -56,6 +65,11 @@ examFile.addEventListener('change', (event) => {
         if (questions.length > 0) {
             // Set current subject for score tracking (use filename without extension)
             currentSubject = file.name.replace('.md', '').replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+            currentExamContent = content;
+            currentExamFilename = file.name;
+            
+            // Store the uploaded exam
+            storeExam(currentSubject, content, file.name);
             
             initialView.classList.add('hidden');
             examArea.classList.remove('hidden');
@@ -91,6 +105,11 @@ loadGeneratedExamBtn.addEventListener('click', async () => {
         if (questions.length > 0) {
             // Set current subject for score tracking
             currentSubject = selectedExam.replace('_exam.md', '').replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+            currentExamContent = content;
+            currentExamFilename = selectedExam;
+            
+            // Store the loaded exam
+            storeExam(currentSubject, content, selectedExam);
             
             initialView.classList.add('hidden');
             examArea.classList.remove('hidden');
@@ -113,6 +132,7 @@ loadGeneratedExamBtn.addEventListener('click', async () => {
 generatePrebuiltExamBtn.addEventListener('click', async () => {
     const selectedExam = generatedExamSelect.value;
     const difficulty = prebuiltDifficultySelect.value;
+    const questionCount = prebuiltQuestionCountSelect.value;
     
     if (!selectedExam) {
         alert('Please select a subject from the dropdown.');
@@ -135,7 +155,8 @@ generatePrebuiltExamBtn.addEventListener('click', async () => {
             },
             body: JSON.stringify({
                 subject: subject,
-                difficulty: difficulty
+                difficulty: difficulty,
+                questionCount: parseInt(questionCount)
             })
         });
         
@@ -159,6 +180,9 @@ generatePrebuiltExamBtn.addEventListener('click', async () => {
         currentSubject = subject + ` (${difficulty.charAt(0).toUpperCase() + difficulty.slice(1)})`;
         currentExamContent = data.content;
         currentExamFilename = data.filename;
+        
+        // Store the generated exam
+        storeExam(currentSubject, data.content, data.filename, difficulty, questionCount);
         
         // Start exam immediately
         initialView.classList.add('hidden');
@@ -556,6 +580,7 @@ displayScoreHistory();
 async function generateExamWithAI() {
     const subject = subjectInput.value.trim();
     const difficulty = aiDifficultySelect.value;
+    const questionCount = aiQuestionCountSelect.value;
     
     if (!subject) {
         alert('Please enter a subject for your exam.');
@@ -579,7 +604,8 @@ async function generateExamWithAI() {
             },
             body: JSON.stringify({
                 subject: subject,
-                difficulty: difficulty
+                difficulty: difficulty,
+                questionCount: parseInt(questionCount)
             })
         });
         
@@ -613,6 +639,9 @@ async function generateExamWithAI() {
         currentSubject = subject;
         currentExamContent = data.content;
         currentExamFilename = data.filename;
+        
+        // Store the generated exam
+        storeExam(subject, data.content, data.filename, difficulty, questionCount);
         
         // Hide progress and show success
         aiProgress.classList.add('hidden');
@@ -825,6 +854,7 @@ resetColorsBtn.addEventListener('click', () => {
 // Initialize color preferences on page load
 document.addEventListener('DOMContentLoaded', () => {
     loadColorPreferences();
+    refreshStoredExamsList();
     
     // Additional MathJax initialization for GitHub Pages compatibility
     if (typeof MathJax !== 'undefined') {
@@ -843,3 +873,290 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 });
+
+// ===== STORED EXAMS MANAGEMENT =====
+
+// Stored Exams Management Event Listeners
+refreshStoredExamsBtn.addEventListener('click', refreshStoredExamsList);
+downloadAllExamsBtn.addEventListener('click', downloadAllStoredExams);
+clearAllExamsBtn.addEventListener('click', clearAllStoredExams);
+
+// Stored Exams Management Functions
+function refreshStoredExamsList() {
+    const storedExams = getStoredExams();
+    
+    if (storedExams.length === 0) {
+        noStoredExams.style.display = 'block';
+        downloadAllExamsBtn.style.display = 'none';
+        clearAllExamsBtn.style.display = 'none';
+        
+        // Clear the list container
+        const examItems = storedExamsList.querySelectorAll('.stored-exam-item');
+        examItems.forEach(item => item.remove());
+    } else {
+        noStoredExams.style.display = 'none';
+        downloadAllExamsBtn.style.display = 'inline-block';
+        clearAllExamsBtn.style.display = 'inline-block';
+        
+        // Clear existing items
+        const examItems = storedExamsList.querySelectorAll('.stored-exam-item');
+        examItems.forEach(item => item.remove());
+        
+        // Add stored exams to the list
+        storedExams.forEach((exam, index) => {
+            const examItem = createStoredExamItem(exam, index);
+            storedExamsList.insertBefore(examItem, noStoredExams);
+        });
+    }
+}
+
+function getStoredExams() {
+    const exams = [];
+    
+    // Get all localStorage keys that start with 'exam_'
+    for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith('exam_')) {
+            try {
+                const examData = JSON.parse(localStorage.getItem(key));
+                examData.key = key;
+                examData.storageDate = examData.storageDate || new Date().toISOString();
+                exams.push(examData);
+            } catch (error) {
+                console.warn(`Could not parse stored exam: ${key}`, error);
+            }
+        }
+    }
+    
+    // Sort by storage date (newest first)
+    return exams.sort((a, b) => new Date(b.storageDate) - new Date(a.storageDate));
+}
+
+function createStoredExamItem(exam, index) {
+    const examItem = document.createElement('div');
+    examItem.className = 'stored-exam-item';
+    examItem.style.cssText = `
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem;
+        margin-bottom: 0.75rem;
+        background: var(--surface-light);
+        border: 1px solid var(--border);
+        border-radius: var(--border-radius);
+        transition: var(--transition);
+    `;
+    
+    // Add hover effect
+    examItem.addEventListener('mouseenter', () => {
+        examItem.style.borderColor = 'var(--primary-color)';
+        examItem.style.background = 'var(--surface)';
+    });
+    
+    examItem.addEventListener('mouseleave', () => {
+        examItem.style.borderColor = 'var(--border)';
+        examItem.style.background = 'var(--surface-light)';
+    });
+    
+    const examInfo = document.createElement('div');
+    examInfo.style.cssText = 'flex: 1;';
+    
+    const examTitle = document.createElement('div');
+    examTitle.style.cssText = 'font-weight: 600; color: var(--text-primary); margin-bottom: 0.25rem;';
+    examTitle.textContent = exam.subject || `Exam ${index + 1}`;
+    
+    const examDetails = document.createElement('div');
+    examDetails.style.cssText = 'font-size: 0.85rem; color: var(--text-muted);';
+    
+    // Use stored question count if available, otherwise count from content
+    const questionsCount = exam.questionCount || (exam.content ? exam.content.split('\n').filter(line => /^\d+\./.test(line.trim())).length : 0);
+    const storedDate = new Date(exam.storageDate).toLocaleDateString();
+    const difficulty = exam.difficulty ? ` • ${exam.difficulty.charAt(0).toUpperCase() + exam.difficulty.slice(1)}` : '';
+    
+    examDetails.textContent = `${questionsCount} questions • Stored: ${storedDate}${difficulty}`;
+    
+    examInfo.appendChild(examTitle);
+    examInfo.appendChild(examDetails);
+    
+    const buttonGroup = document.createElement('div');
+    buttonGroup.style.cssText = 'display: flex; gap: 0.5rem; align-items: center;';
+    
+    // Continue/Start button
+    const continueBtn = document.createElement('button');
+    continueBtn.className = 'btn btn-primary';
+    continueBtn.style.cssText = 'font-size: 0.85rem; padding: 0.5rem 1rem;';
+    continueBtn.textContent = '🚀 Start';
+    continueBtn.addEventListener('click', () => {
+        loadStoredExam(exam);
+    });
+    
+    // Download button
+    const downloadBtn = document.createElement('button');
+    downloadBtn.className = 'btn btn-secondary';
+    downloadBtn.style.cssText = 'font-size: 0.85rem; padding: 0.5rem 1rem;';
+    downloadBtn.textContent = '📥';
+    downloadBtn.title = 'Download Exam';
+    downloadBtn.addEventListener('click', () => {
+        downloadStoredExam(exam);
+    });
+    
+    // Delete button
+    const deleteBtn = document.createElement('button');
+    deleteBtn.className = 'btn btn-danger';
+    deleteBtn.style.cssText = 'font-size: 0.85rem; padding: 0.5rem 1rem; background: var(--danger-color, #dc2626); border-color: var(--danger-color, #dc2626); color: white;';
+    deleteBtn.textContent = '🗑️';
+    deleteBtn.title = 'Delete Exam';
+    deleteBtn.addEventListener('click', () => {
+        if (confirm(`Are you sure you want to delete "${exam.subject || 'this exam'}"?`)) {
+            localStorage.removeItem(exam.key);
+            refreshStoredExamsList();
+        }
+    });
+    
+    buttonGroup.appendChild(continueBtn);
+    buttonGroup.appendChild(downloadBtn);
+    buttonGroup.appendChild(deleteBtn);
+    
+    examItem.appendChild(examInfo);
+    examItem.appendChild(buttonGroup);
+    
+    return examItem;
+}
+
+function loadStoredExam(exam) {
+    try {
+        // Parse the stored exam content
+        const [parsedQuestions, parsedAnswers] = parseMarkdown(exam.content);
+        
+        if (parsedQuestions.length === 0) {
+            throw new Error('No valid questions found in stored exam');
+        }
+        
+        // Load the exam
+        questions = parsedQuestions;
+        answers = parsedAnswers;
+        currentSubject = exam.subject || 'Stored Exam';
+        currentExamContent = exam.content;
+        currentExamFilename = exam.filename || `${exam.subject || 'exam'}.md`;
+        
+        // Start exam
+        initialView.classList.add('hidden');
+        examArea.classList.remove('hidden');
+        startExam();
+        
+    } catch (error) {
+        console.error('Error loading stored exam:', error);
+        alert('Error loading exam: ' + error.message);
+    }
+}
+
+function downloadStoredExam(exam) {
+    try {
+        const filename = exam.filename || `${exam.subject || 'exam'}.md`;
+        const blob = new Blob([exam.content], { type: 'text/markdown' });
+        const url = URL.createObjectURL(blob);
+        
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+    } catch (error) {
+        console.error('Error downloading exam:', error);
+        alert('Error downloading exam: ' + error.message);
+    }
+}
+
+function downloadAllStoredExams() {
+    try {
+        const storedExams = getStoredExams();
+        
+        if (storedExams.length === 0) {
+            alert('No stored exams to download');
+            return;
+        }
+        
+        // Create a zip-like structure by combining all exams
+        let allExamsContent = '# All Stored Exams\n\n';
+        allExamsContent += `Generated on: ${new Date().toLocaleString()}\n`;
+        allExamsContent += `Total exams: ${storedExams.length}\n\n`;
+        allExamsContent += '---\n\n';
+        
+        storedExams.forEach((exam, index) => {
+            const questionCount = exam.questionCount || (exam.content ? exam.content.split('\n').filter(line => /^\d+\./.test(line.trim())).length : 0);
+            allExamsContent += `# Exam ${index + 1}: ${exam.subject || 'Untitled'}\n`;
+            allExamsContent += `Difficulty: ${exam.difficulty || 'Not specified'}\n`;
+            allExamsContent += `Questions: ${questionCount}\n`;
+            allExamsContent += `Stored: ${new Date(exam.storageDate).toLocaleString()}\n\n`;
+            allExamsContent += exam.content;
+            allExamsContent += '\n\n---\n\n';
+        });
+        
+        const blob = new Blob([allExamsContent], { type: 'text/markdown' });
+        const url = URL.createObjectURL(blob);
+        
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `all_exams_${new Date().toISOString().split('T')[0]}.md`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+    } catch (error) {
+        console.error('Error downloading all exams:', error);
+        alert('Error downloading exams: ' + error.message);
+    }
+}
+
+function clearAllStoredExams() {
+    const storedExams = getStoredExams();
+    
+    if (storedExams.length === 0) {
+        alert('No stored exams to clear');
+        return;
+    }
+    
+    const confirmMessage = `Are you sure you want to delete all ${storedExams.length} stored exam(s)? This action cannot be undone.`;
+    
+    if (confirm(confirmMessage)) {
+        // Remove all exam-related items from localStorage
+        storedExams.forEach(exam => {
+            localStorage.removeItem(exam.key);
+        });
+        
+        refreshStoredExamsList();
+        alert('All stored exams have been cleared');
+    }
+}
+
+// Function to store exam (call this when generating/loading exams)
+function storeExam(subject, content, filename, difficulty = null, questionCount = null) {
+    try {
+        const examData = {
+            subject: subject,
+            content: content,
+            filename: filename,
+            difficulty: difficulty,
+            questionCount: questionCount,
+            storageDate: new Date().toISOString()
+        };
+        
+        const key = `exam_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        localStorage.setItem(key, JSON.stringify(examData));
+        
+        // Refresh the list if we're on the main page
+        if (!examArea.classList.contains('hidden') === false) {
+            setTimeout(refreshStoredExamsList, 100);
+        }
+        
+    } catch (error) {
+        console.warn('Could not store exam:', error);
+    }
+}
+
+// Load stored exams on page load
+loadStoredExams();
