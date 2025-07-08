@@ -36,28 +36,6 @@
             <h1>Smart Exam Platform</h1>
             <p class="subtitle">Interactive learning with instant feedback and detailed explanations</p>
             
-            <!-- Instructions -->
-            <div class="card">
-                <div class="section-header">
-                    <div class="section-icon">📖</div>
-                    <h3>How to Get Started</h3>
-                </div>
-                <div class="instruction-grid">
-                    <div class="instruction-item">
-                        <h4>⚡ Quick Start</h4>
-                        <p>Choose from 16 pre-built exams covering various subjects and start learning immediately</p>
-                    </div>
-                    <div class="instruction-item">
-                        <h4>📁 Custom Content</h4>
-                        <p>Upload your own markdown exam files for personalized study sessions</p>
-                    </div>
-                    <div class="instruction-item">
-                        <h4>🎯 AI-Generated</h4>
-                        <p>Copy our template and use AI to create custom exams on any topic</p>
-                    </div>
-                </div>
-            </div>
-            
             <!-- Pre-built Exams -->
             <div class="card">
                 <div class="section-header">
@@ -84,9 +62,29 @@
                     <option value="psychology_exam.md">🧠 Psychology</option>
                     <option value="sociology_exam.md">👥 Sociology</option>
                 </select>
-                <button id="loadGeneratedExam" class="btn btn-primary btn-lg w-full">
-                    Start Selected Exam
-                </button>
+                
+                <!-- Difficulty Selection for Pre-built -->
+                <div style="margin: 1rem 0;">
+                    <label for="prebuiltDifficultySelect" style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: var(--text-primary);">
+                        Difficulty Level:
+                    </label>
+                    <select id="prebuiltDifficultySelect" style="width: 100%; padding: 0.875rem; background: var(--surface-light); border: 1px solid var(--border); border-radius: var(--border-radius); color: var(--text-primary); font-size: 1rem; font-family: inherit;">
+                        <option value="normal">📘 Normal</option>
+                        <option value="beginner">📗 Beginner</option>
+                        <option value="hard">📙 Hard</option>
+                        <option value="veteran">📕 Veteran</option>
+                        <option value="extreme">📚 Extreme</option>
+                    </select>
+                </div>
+                
+                <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+                    <button id="loadGeneratedExam" class="btn btn-primary btn-lg" style="flex: 1;">
+                        Start Selected Exam
+                    </button>
+                    <button id="generatePrebuiltExam" class="btn btn-secondary btn-lg" style="flex: 1;">
+                        🤖 Generate New
+                    </button>
+                </div>
             </div>
             
             <!-- Divider -->
@@ -123,6 +121,20 @@
                     </label>
                     <input type="text" id="subjectInput" placeholder="e.g., Biology, World War II, Calculus, Psychology..." 
                            style="width: 100%; padding: 0.875rem; background: var(--surface-light); border: 1px solid var(--border); border-radius: var(--border-radius); color: var(--text-primary); font-size: 1rem; font-family: inherit; transition: var(--transition);">
+                </div>
+                
+                <!-- Difficulty Selection for AI -->
+                <div style="margin-bottom: 1.5rem;">
+                    <label for="aiDifficultySelect" style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: var(--text-primary);">
+                        Difficulty Level:
+                    </label>
+                    <select id="aiDifficultySelect" style="width: 100%; padding: 0.875rem; background: var(--surface-light); border: 1px solid var(--border); border-radius: var(--border-radius); color: var(--text-primary); font-size: 1rem; font-family: inherit;">
+                        <option value="normal">📘 Normal</option>
+                        <option value="beginner">📗 Beginner</option>
+                        <option value="hard">📙 Hard</option>
+                        <option value="veteran">📕 Veteran</option>
+                        <option value="extreme">📚 Extreme</option>
+                    </select>
                 </div>
                 
                 <!-- Generate Button -->

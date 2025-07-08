@@ -13,6 +13,8 @@ const progressBar = document.getElementById('progressBar');
 // New elements for dropdown functionality
 const generatedExamSelect = document.getElementById('generatedExamSelect');
 const loadGeneratedExamBtn = document.getElementById('loadGeneratedExam');
+const generatePrebuiltExamBtn = document.getElementById('generatePrebuiltExam');
+const prebuiltDifficultySelect = document.getElementById('prebuiltDifficultySelect');
 
 // New elements for back button and score tracking
 const backBtn = document.getElementById('backBtn');
@@ -21,6 +23,14 @@ const scoreHistoryList = document.getElementById('scoreHistoryList');
 const clearHistoryBtn = document.getElementById('clearHistoryBtn');
 const downloadExamBtn = document.getElementById('downloadExamBtn');
 const startExamBtn = document.getElementById('startExamBtn');
+
+// AI Generation elements
+const generateExamBtn = document.getElementById('generateExamBtn');
+const aiProgress = document.getElementById('aiProgress');
+const progressText = document.getElementById('progressText');
+const subjectInput = document.getElementById('subjectInput');
+const aiDifficultySelect = document.getElementById('aiDifficultySelect');
+const successMessage = document.getElementById('successMessage');
 
 let questions = [];
 let answers = [];
@@ -96,6 +106,72 @@ loadGeneratedExamBtn.addEventListener('click', async () => {
         // Restore button state
         loadGeneratedExamBtn.textContent = 'Load Selected Exam';
         loadGeneratedExamBtn.disabled = false;
+    }
+});
+
+// Event listener for generate prebuilt exam
+generatePrebuiltExamBtn.addEventListener('click', async () => {
+    const selectedExam = generatedExamSelect.value;
+    const difficulty = prebuiltDifficultySelect.value;
+    
+    if (!selectedExam) {
+        alert('Please select a subject from the dropdown.');
+        return;
+    }
+    
+    try {
+        // Show loading indicator
+        generatePrebuiltExamBtn.textContent = 'Generating...';
+        generatePrebuiltExamBtn.disabled = true;
+        
+        // Extract subject name from filename
+        const subject = selectedExam.replace('_exam.md', '').replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+        
+        // Make API call to backend
+        const response = await fetch('/api/generate-exam', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                subject: subject,
+                difficulty: difficulty
+            })
+        });
+        
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Failed to generate exam');
+        }
+        
+        const data = await response.json();
+        
+        // Parse and validate the generated content
+        const [parsedQuestions, parsedAnswers] = parseMarkdown(data.content);
+        
+        if (parsedQuestions.length === 0) {
+            throw new Error(`Generated content could not be parsed. Please try again.`);
+        }
+        
+        // Load the exam
+        questions = parsedQuestions;
+        answers = parsedAnswers;
+        currentSubject = subject + ` (${difficulty.charAt(0).toUpperCase() + difficulty.slice(1)})`;
+        currentExamContent = data.content;
+        currentExamFilename = data.filename;
+        
+        // Start exam immediately
+        initialView.classList.add('hidden');
+        examArea.classList.remove('hidden');
+        startExam();
+        
+    } catch (error) {
+        console.error('Error generating prebuilt exam:', error);
+        alert('Error generating exam: ' + error.message);
+    } finally {
+        // Restore button state
+        generatePrebuiltExamBtn.textContent = '🤖 Generate New';
+        generatePrebuiltExamBtn.disabled = false;
     }
 });
 
@@ -476,16 +552,10 @@ startExamBtn.addEventListener('click', () => {
 // Initialize score history display
 displayScoreHistory();
 
-// AI Generation functionality
-const generateExamBtn = document.getElementById('generateExamBtn');
-const aiProgress = document.getElementById('aiProgress');
-const progressText = document.getElementById('progressText');
-const subjectInput = document.getElementById('subjectInput');
-const successMessage = document.getElementById('successMessage');
-
 // Main AI generation function
 async function generateExamWithAI() {
     const subject = subjectInput.value.trim();
+    const difficulty = aiDifficultySelect.value;
     
     if (!subject) {
         alert('Please enter a subject for your exam.');
@@ -508,7 +578,8 @@ async function generateExamWithAI() {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                subject: subject
+                subject: subject,
+                difficulty: difficulty
             })
         });
         

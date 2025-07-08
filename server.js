@@ -21,13 +21,14 @@ if (!GEMINI_API_KEY) {
 // Endpoint to generate exam with AI
 app.post('/api/generate-exam', async (req, res) => {
     try {
-        const { subject } = req.body;
+        const { subject, difficulty = 'normal' } = req.body;
         
         if (!subject || !subject.trim()) {
             return res.status(400).json({ error: 'Subject is required' });
         }
         
         console.log(`📚 Generating exam for subject: ${subject}`);
+        console.log(`📊 Difficulty level: ${difficulty}`);
         console.log(`🤖 Using model: gemini-2.5-flash-lite-preview-06-17`);
         
         // Available Gemini models:
@@ -37,8 +38,23 @@ app.post('/api/generate-exam', async (req, res) => {
         // - gemini-1.5-pro-latest (More capable, slower)
         const GEMINI_MODEL = 'gemini-2.5-flash-lite-preview-06-17';
         
+        // Create difficulty-specific instructions
+        const difficultyInstructions = {
+            beginner: "Focus on basic concepts, definitions, and fundamental principles. Use simple language and straightforward questions.",
+            normal: "Include a mix of basic and intermediate concepts. Questions should test understanding and application of key principles.",
+            hard: "Include complex scenarios, detailed analysis, and multi-step problem solving. Require deeper understanding.",
+            veteran: "Include advanced concepts, critical thinking, and synthesis of multiple topics. Questions should be challenging.",
+            extreme: "Include expert-level questions, cutting-edge topics, and complex theoretical scenarios. Push the boundaries of knowledge."
+        };
+
+        const difficultyText = difficultyInstructions[difficulty] || difficultyInstructions.normal;
+
         // Create the prompt for Gemini with strict formatting requirements
-        const prompt = `Generate a ${subject} exam in EXACT markdown format. Follow this template PRECISELY:
+        const prompt = `Generate a ${subject} exam at ${difficulty.toUpperCase()} difficulty level in EXACT markdown format. 
+
+DIFFICULTY REQUIREMENTS: ${difficultyText}
+
+Follow this template PRECISELY:
 
 # ${subject} Mock Exam
 
@@ -172,7 +188,10 @@ CRITICAL RULES:
 - Keep the "---" separator between questions and answers
 - Generate exactly 15 questions total
 - All questions must be multiple choice with 4 options each
-- Make questions relevant to ${subject} with varying difficulty levels`;
+- Make questions relevant to ${subject} at ${difficulty.toUpperCase()} difficulty level
+- ${difficultyText}
+- Ensure all questions are appropriate for the ${difficulty} difficulty level
+- Provide detailed explanations that match the difficulty level`;
 
         // Make API call to Gemini 2.5 Flash
         const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`, {
